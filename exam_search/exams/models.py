@@ -93,6 +93,7 @@ class Exam(models.Model):
         default="一般入試"
     )
     problem_url = models.URLField(
+        max_length=500, 
         verbose_name="問題PDF URL",
         help_text="大学公式または信頼できるソースの問題PDFリンク",
         blank=True

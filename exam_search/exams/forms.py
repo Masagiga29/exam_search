@@ -4,51 +4,6 @@ from django.contrib.auth.models import User
 from .models import Exam, University
 
 
-class ExamSearchForm(forms.Form):
-    """
-    過去問検索フォーム
-    """
-    q = forms.CharField(
-        required=False,
-        label='キーワード',
-        widget=forms.TextInput(attrs={
-            'class': 'form-control form-control-lg',
-            'placeholder': '大学名や科目で検索...',
-            'aria-label': '検索キーワード'
-        })
-    )
-    
-    university = forms.ModelChoiceField(
-        queryset=University.objects.all(),
-        required=False,
-        label='大学',
-        empty_label='すべての大学',
-        widget=forms.Select(attrs={
-            'class': 'form-select'
-        })
-    )
-    
-    year = forms.IntegerField(
-        required=False,
-        label='年度',
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': '例: 2024',
-            'min': 2000,
-            'max': 2030
-        })
-    )
-    
-    subject = forms.ChoiceField(
-        choices=[('', 'すべての科目')] + Exam.SUBJECT_CHOICES,
-        required=False,
-        label='科目',
-        widget=forms.Select(attrs={
-            'class': 'form-select'
-        })
-    )
-
-
 class CustomUserCreationForm(UserCreationForm):
     """
     カスタムユーザー登録フォーム
