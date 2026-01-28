@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}マイページ - 過去問検索プラットフォーム{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4">
+        <i class="bi bi-person-circle"></i> マイページ
+    </h2>
+
+    <div class="row">
+        <!-- お気に入り一覧 -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-bookmark-heart-fill"></i> お気に入り
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if favorites %}
+                    <ul class="list-group list-group-flush">
+                        {% for favorite in favorites %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">
+                                        <a href="{% url 'exams:exam_detail' favorite.exam.pk %}" 
+                                           class="text-decoration-none">
+                                            {{ favorite.exam.university.name }}
+                                        </a>
+                                    </h6>
+                                    <p class="mb-1 text-muted small">
+                                        <span class="badge bg-info">
+                                            {{ favorite.exam.get_subject_display }}
+                                        </span>
+                                        {{ favorite.exam.year }}年度 - {{ favorite.exam.exam_type }}
+                                    </p>
+                                    <p class="mb-0 text-muted small">
+                                        <i class="bi bi-clock"></i> 
+                                        登録日: {{ favorite.created_at|date:"Y年m月d日" }}
+                                    </p>
+                                    {% if favorite.note %}
+                                    <p class="mb-0 mt-2 small">
+                                        <i class="bi bi-sticky"></i> {{ favorite.note }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <a href="{% url 'exams:remove_favorite' favorite.exam.pk %}" 
+                                   class="btn btn-sm btn-outline-danger ms-2">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle"></i>
+                        お気に入りに登録されている過去問はありません。
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 検索履歴 -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-clock-history"></i> 検索履歴
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if search_history %}
+                    <ul class="list-group list-group-flush">
+                        {% for history in search_history %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">
+                                        {% if history.query %}
+                                        <a href="{% url 'exams:search' %}?q={{ history.query }}" 
+                                           class="text-decoration-none">
+                                            「{{ history.query }}」
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">絞り込み検索</span>
+                                        {% endif %}
+                                    </h6>
+                                    <p class="mb-0 text-muted small">
+                                        <i class="bi bi-clock"></i> 
+                                        {{ history.searched_at|date:"Y年m月d日 H:i" }}
+                                    </p>
+                                    {% if history.filters %}
+                                    <div class="mt-1">
+                                        {% if history.filters.year %}
+                                        <span class="badge bg-secondary me-1">
+                                            {{ history.filters.year }}年度
+                                        </span>
+                                        {% endif %}
+                                        {% if history.filters.subject %}
+                                        <span class="badge bg-info me-1">
+                                            {{ history.filters.subject }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle"></i>
+                        検索履歴はありません。
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ユーザー情報 -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">
+                <i class="bi bi-person-badge"></i> ユーザー情報
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>ユーザー名:</strong> {{ user.username }}</p>
+                    <p><strong>メールアドレス:</strong> {{ user.email }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>登録日:</strong> {{ user.date_joined|date:"Y年m月d日" }}</p>
+                    <p><strong>最終ログイン:</strong> {{ user.last_login|date:"Y年m月d日 H:i" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

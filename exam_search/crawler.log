@@ -1,0 +1,36 @@
+2026-01-20 17:12:59,485 - INFO - Generating data quality report...
+2026-01-20 17:13:06,437 - INFO - Validating exam PDF links...
+2026-01-20 17:13:06,814 - INFO - Validation complete: 0 valid, 3 invalid
+2026-01-20 17:13:06,815 - INFO - Validating answer source links...
+2026-01-20 17:13:07,204 - INFO - Validation complete: 0 active, 6 inactive
+2026-01-20 17:14:12,209 - INFO - Generating data quality report...
+2026-01-27 15:42:09,072 - INFO - Fetching: https://www.toshin-kakomon.com/university/東京大学
+2026-01-27 15:42:12,505 - INFO - Saved 0 new exams
+2026-01-27 15:42:12,507 - INFO - Fetching: https://www.toshin-kakomon.com/university/京都大学
+2026-01-27 15:42:15,780 - INFO - Saved 0 new exams
+2026-01-27 15:42:15,781 - INFO - Fetching: https://www.toshin-kakomon.com/university/大阪大学
+2026-01-27 15:42:19,062 - INFO - Saved 0 new exams
+2026-01-27 15:42:19,066 - INFO - Fetching: https://www.toshin-kakomon.com/university/東北大学
+2026-01-27 15:42:22,192 - INFO - Saved 0 new exams
+2026-01-27 15:42:22,195 - INFO - Fetching: https://www.toshin-kakomon.com/university/名古屋大学
+2026-01-27 15:42:25,350 - INFO - Saved 0 new exams
+2026-01-27 15:42:25,353 - INFO - Fetching: https://www.toshin-kakomon.com/university/九州大学
+2026-01-27 15:42:28,549 - INFO - Saved 0 new exams
+2026-01-27 15:42:28,552 - INFO - Fetching: https://www.toshin-kakomon.com/university/北海道大学
+2026-01-27 15:42:31,680 - INFO - Saved 0 new exams
+2026-01-27 15:42:31,683 - INFO - Fetching: https://www.toshin-kakomon.com/university/早稲田大学
+2026-01-27 15:42:34,821 - INFO - Saved 0 new exams
+2026-01-27 15:42:34,824 - INFO - Fetching: https://www.toshin-kakomon.com/university/慶應義塾大学
+2026-01-27 15:42:37,968 - INFO - Saved 0 new exams
+2026-01-27 15:42:37,971 - INFO - Fetching: https://www.toshin-kakomon.com/university/上智大学
+2026-01-27 15:42:41,151 - INFO - Saved 0 new exams
+2026-01-27 15:42:41,154 - INFO - Fetching: https://www.toshin-kakomon.com/university/明治大学
+2026-01-27 15:42:44,338 - INFO - Saved 0 new exams
+2026-01-27 15:42:44,341 - INFO - Fetching: https://www.toshin-kakomon.com/university/青山学院大学
+2026-01-27 15:42:47,505 - INFO - Saved 0 new exams
+2026-01-27 15:42:47,508 - INFO - Fetching: https://www.toshin-kakomon.com/university/立教大学
+2026-01-27 15:42:50,681 - INFO - Saved 0 new exams
+2026-01-27 15:42:50,684 - INFO - Fetching: https://www.toshin-kakomon.com/university/中央大学
+2026-01-27 15:42:53,855 - INFO - Saved 0 new exams
+2026-01-27 15:42:53,858 - INFO - Fetching: https://www.toshin-kakomon.com/university/法政大学
+2026-01-27 15:42:57,020 - INFO - Saved 0 new exams

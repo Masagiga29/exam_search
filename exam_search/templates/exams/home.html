@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}ホーム - 過去問検索プラットフォーム{% endblock %}
+
+{% block content %}
+<!-- ヒーローセクション -->
+<div class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">
+            大学受験過去問を一括検索
+        </h1>
+        <p class="lead mb-5">
+            複数の予備校が公開している解答・解説を横並びで比較できるプラットフォーム
+        </p>
+        
+        <!-- 検索フォーム -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <form action="{% url 'exams:search' %}" method="get" class="search-box">
+                    <div class="input-group">
+                        <input type="text" 
+                               name="q" 
+                               class="form-control border-0" 
+                               placeholder="大学名、科目で検索..."
+                               style="box-shadow: none;">
+                        <button class="btn btn-primary px-5" type="submit">
+                            <i class="bi bi-search"></i> 検索
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 人気の大学 -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">
+            <i class="bi bi-star-fill text-warning"></i> 人気の大学
+        </h2>
+        <div class="row g-4">
+            {% for university in popular_universities %}
+            <div class="col-md-4">
+                <div class="card card-exam">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">{{ university.name }}</h5>
+                        <p class="text-muted">
+                            <i class="bi bi-file-earmark-text"></i> {{ university.exam_count }} 件の過去問
+                        </p>
+                        <a href="{% url 'exams:university_detail' university.pk %}" 
+                           class="btn btn-outline-primary">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <p class="text-center text-muted">登録されている大学がありません</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- 最新の過去問 -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-4">
+            <i class="bi bi-clock-history"></i> 最新の過去問
+        </h2>
+        <div class="row g-4">
+            {% for exam in recent_exams %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card card-exam h-100">
+                    <div class="card-body">
+                        <span class="badge badge-subject bg-info mb-2">
+                            {{ exam.get_subject_display }}
+                        </span>
+                        <h6 class="card-title">{{ exam.university.name }}</h6>
+                        <p class="text-muted mb-2">
+                            <i class="bi bi-calendar3"></i> {{ exam.year }}年度
+                        </p>
+                        <p class="small text-muted mb-3">
+                            <i class="bi bi-building"></i> {{ exam.exam_type }}
+                        </p>
+                        <a href="{% url 'exams:exam_detail' exam.pk %}" 
+                           class="btn btn-sm btn-primary w-100">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <p class="text-center text-muted">登録されている過去問がありません</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- 特徴説明 -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">このプラットフォームの特徴</h2>
+        <div class="row g-4">
+            <div class="col-md-4 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-search display-4 text-primary"></i>
+                </div>
+                <h4>一括検索</h4>
+                <p class="text-muted">
+                    大学名、年度、科目から過去問を簡単に検索できます
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-grid-3x3-gap-fill display-4 text-success"></i>
+                </div>
+                <h4>横並び比較</h4>
+                <p class="text-muted">
+                    複数の予備校の解答・解説を一度に比較できます
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-bookmark-heart-fill display-4 text-danger"></i>
+                </div>
+                <h4>お気に入り保存</h4>
+                <p class="text-muted">
+                    気になる過去問をお気に入りに保存して後で確認
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

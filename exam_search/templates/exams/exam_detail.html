@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ exam }} - 過去問検索プラットフォーム{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- パンくずリスト -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'exams:home' %}">ホーム</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'exams:search' %}">検索</a></li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'exams:university_detail' exam.university.pk %}">
+                    {{ exam.university.name }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active">{{ exam.year }}年度 {{ exam.get_subject_display }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- メインコンテンツ -->
+        <div class="col-lg-8">
+            <!-- 過去問情報カード -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-file-earmark-text"></i> 過去問詳細
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h4>{{ exam.university.name }}</h4>
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-calendar3"></i> {{ exam.year }}年度
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <span class="badge badge-subject bg-info fs-6 mb-2">
+                                {{ exam.get_subject_display }}
+                            </span>
+                            <br>
+                            <span class="badge bg-secondary">{{ exam.exam_type }}</span>
+                        </div>
+                    </div>
+
+                    {% if exam.description %}
+                    <div class="alert alert-light" role="alert">
+                        <strong>説明:</strong> {{ exam.description }}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2 mb-3">
+                        <span class="badge bg-info">
+                            <i class="bi bi-info-circle"></i> {{ exam.get_source_type_display }}
+                        </span>
+                        {% if exam.is_verified %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> 検証済み
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- お気に入りボタン -->
+                    {% if user.is_authenticated %}
+                    <div class="d-grid gap-2 d-md-flex">
+                        {% if is_favorited %}
+                        <a href="{% url 'exams:remove_favorite' exam.pk %}" 
+                           class="btn btn-outline-danger">
+                            <i class="bi bi-heart-fill"></i> お気に入りから削除
+                        </a>
+                        {% else %}
+                        <a href="{% url 'exams:add_favorite' exam.pk %}" 
+                           class="btn btn-outline-primary">
+                            <i class="bi bi-heart"></i> お気に入りに追加
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 問題PDFプレビュー -->
+            {% if exam.problem_url %}
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-file-pdf"></i> 問題PDF
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>著作権に関する注意:</strong> 
+                        問題PDFは外部サイトへのリンクです。著作権は各機関に帰属します。
+                    </div>
+                    
+                    <!-- PDFプレビュー（iframeまたはリンク） -->
+                    <div class="ratio ratio-16x9 mb-3">
+                        <iframe src="{{ exam.problem_url }}" 
+                                title="問題PDFプレビュー"
+                                style="border: 1px solid #ddd; border-radius: 5px;">
+                        </iframe>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <a href="{{ exam.problem_url }}" 
+                           target="_blank" 
+                           class="btn btn-primary">
+                            <i class="bi bi-box-arrow-up-right"></i> 別ウィンドウで開く
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle"></i>
+                問題PDFのリンクは登録されていません。
+            </div>
+            {% endif %}
+
+            <!-- 予備校別解答・解説比較テーブル -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-grid-3x3-gap"></i> 解答・解説比較
+                    </h4>
+                </div>
+                <div class="card-body comparison-table">
+                    {% if answer_sources %}
+                    <p class="mb-3">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        複数の予備校が公開している解答・解説を比較できます
+                    </p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">予備校・機関</th>
+                                    <th scope="col">解説</th>
+                                    <th scope="col">動画</th>
+                                    <th scope="col">信頼度</th>
+                                    <th scope="col">リンク</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for source in answer_sources %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ source.provider_name }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if source.has_detailed_explanation %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> あり
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">なし</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if source.has_video_explanation %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-camera-video"></i> あり
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">なし</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2">{{ source.reliability_score }}/10</span>
+                                            <div class="progress" style="width: 60px; height: 8px;">
+                                                <div class="progress-bar bg-warning"
+                                                     role="progressbar"
+                                                     data-score="{{ source.reliability_score }}"
+                                                     aria-valuenow="{{ source.reliability_score }}"
+                                                     aria-valuemin="0"
+                                                     aria-valuemax="10">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="{{ source.answer_url }}" 
+                                           target="_blank" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-box-arrow-up-right"></i> 見る
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% if source.notes %}
+                                <tr>
+                                    <td colspan="5" class="small text-muted">
+                                        <i class="bi bi-info-circle"></i> {{ source.notes }}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        現在、登録されている解答ソースがありません。
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- サイドバー -->
+        <div class="col-lg-4">
+            <!-- 関連する過去問 -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-link-45deg"></i> 同年度の他の科目
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if related_exams %}
+                    <ul class="list-group list-group-flush">
+                        {% for related in related_exams %}
+                        <li class="list-group-item px-0">
+                            <a href="{% url 'exams:exam_detail' related.pk %}" 
+                               class="text-decoration-none">
+                                <span class="badge bg-info me-2">
+                                    {{ related.get_subject_display }}
+                                </span>
+                                {{ related.exam_type }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted mb-0">他の科目は登録されていません</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 公式サイトへのリンク -->
+            {% if exam.university.official_url %}
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="card-title">公式サイト</h6>
+                    <a href="{{ exam.university.official_url }}" 
+                       target="_blank" 
+                       class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-globe"></i> {{ exam.university.name }}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // プログレスバーの幅を設定
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.progress-bar[data-score]').forEach(function(bar) {
+            const score = parseInt(bar.dataset.score);
+            bar.style.width = (score * 10) + '%';
+        });
+    });
+</script>
+{% endblock %}

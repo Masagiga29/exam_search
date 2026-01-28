@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}検索結果 - 過去問検索プラットフォーム{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- サイドバー（絞り込みフィルター） -->
+        <div class="col-lg-3 mb-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-funnel"></i> 絞り込み検索
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{% url 'exams:search' %}">
+                        <!-- キーワード検索 -->
+                        <div class="mb-3">
+                            <label for="q" class="form-label">キーワード</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="q" 
+                                   name="q" 
+                                   value="{{ request.GET.q }}"
+                                   placeholder="大学名など">
+                        </div>
+                        
+                        <!-- 大学選択 -->
+                        <div class="mb-3">
+                            <label for="university" class="form-label">大学</label>
+                            <select class="form-select" id="university" name="university">
+                                <option value="">すべての大学</option>
+                                {% for univ in universities %}
+                                <option value="{{ univ.id }}" 
+                                        {% if request.GET.university == univ.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ univ.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- 年度選択 -->
+                        <div class="mb-3">
+                            <label for="year" class="form-label">年度</label>
+                            <select class="form-select" id="year" name="year">
+                                <option value="">すべての年度</option>
+                                {% for yr in years %}
+                                <option value="{{ yr }}" 
+                                        {% if request.GET.year == yr|stringformat:"s" %}selected{% endif %}>
+                                    {{ yr }}年度
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- 科目選択 -->
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">科目</label>
+                            <select class="form-select" id="subject" name="subject">
+                                <option value="">すべての科目</option>
+                                {% for value, label in subjects %}
+                                <option value="{{ value }}" 
+                                        {% if request.GET.subject == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> 検索
+                        </button>
+                        <a href="{% url 'exams:search' %}" class="btn btn-outline-secondary w-100 mt-2">
+                            <i class="bi bi-arrow-counterclockwise"></i> リセット
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 検索結果エリア -->
+        <div class="col-lg-9">
+            <!-- 検索結果ヘッダー -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>検索結果</h2>
+                    {% if query %}
+                    <p class="text-muted">
+                        「<strong>{{ query }}</strong>」の検索結果: {{ total_results }} 件
+                    </p>
+                    {% else %}
+                    <p class="text-muted">{{ total_results }} 件の過去問が見つかりました</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 検索結果カード -->
+            <div class="row g-4">
+                {% for exam in exams %}
+                <div class="col-md-6 col-xl-4">
+                    <div class="card card-exam h-100">
+                        <div class="card-body">
+                            <!-- 科目バッジ -->
+                            <span class="badge badge-subject bg-info mb-2">
+                                {{ exam.get_subject_display }}
+                            </span>
+                            
+                            <!-- 大学名 -->
+                            <h5 class="card-title">{{ exam.university.name }}</h5>
+                            
+                            <!-- 年度・試験種別 -->
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-calendar3"></i> {{ exam.year }}年度
+                            </p>
+                            <p class="small text-muted mb-3">
+                                <i class="bi bi-building"></i> {{ exam.exam_type }}
+                            </p>
+                            
+                            <!-- 解答ソース数 -->
+                            {% if exam.answer_sources.count > 0 %}
+                            <p class="small mb-3">
+                                <i class="bi bi-file-earmark-check text-success"></i>
+                                解答ソース: {{ exam.answer_sources.count }} 件
+                            </p>
+                            {% endif %}
+                            
+                            <!-- 詳細ボタン -->
+                            <a href="{% url 'exams:exam_detail' exam.pk %}" 
+                               class="btn btn-primary w-100">
+                                詳細を見る
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center" role="alert">
+                        <i class="bi bi-info-circle"></i>
+                        検索条件に一致する過去問が見つかりませんでした。
+                        <br>
+                        検索条件を変更してお試しください。
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- ページネーション -->
+            {% if is_paginated %}
+            <nav aria-label="検索結果のページネーション" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            最初
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            前へ
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            次へ
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            最後
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+  {% for exam in exams %}
+  <div class="col">
+    <div class="card h-100 shadow-sm hover-effect">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="card-title fw-bold text-primary">{{ exam.university.name }}</h5>
+          <span class="badge bg-dark rounded-pill">{{ exam.year }}年度</span>
+        </div>
+
+        <div class="mb-3">
+          <span class="badge bg-info text-dark">{{ exam.get_subject_display }}</span>
+          <span class="badge border text-muted">{{ exam.exam_type }}</span>
+        </div>
+
+        <p class="card-text text-muted small">
+          {{ exam.description|truncatechars:50 }}
+        </p>
+
+        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+            <div class="small text-muted">
+                <i class="fas fa-file-alt"></i> 解答: {{ exam.answer_sources.count }}件
+            </div>
+            <a href="{% url 'exams:exam_detail' exam.pk %}" class="btn btn-sm btn-outline-primary stretched-link">
+                詳細を見る
+            </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}            

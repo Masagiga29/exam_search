@@ -1,0 +1,16 @@
+# Django関連
+Django>=4.2,<5.0
+
+# Webクローリング関連
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0  # BeautifulSoupのパーサー（高速）
+
+# HTML/XML解析のサポート
+html5lib>=1.1  # HTML5パーサー（オプション）
+
+# データベース関連
+# SQLiteは標準ライブラリに含まれる
+
+# ユーティリティ
+python-dateutil>=2.8.0  # 日付処理

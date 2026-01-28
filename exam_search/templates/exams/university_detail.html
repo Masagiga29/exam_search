@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ university.name }} - 過去問検索プラットフォーム{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- パンくずリスト -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'exams:home' %}">ホーム</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'exams:search' %}">検索</a></li>
+            <li class="breadcrumb-item active">{{ university.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- 大学情報カード -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h2 class="card-title">
+                        <i class="bi bi-building"></i> {{ university.name }}
+                    </h2>
+                    {% if university.name_kana %}
+                    <p class="text-muted">{{ university.name_kana }}</p>
+                    {% endif %}
+                    <p class="mb-0">
+                        <span class="badge bg-primary">{{ university.get_school_type_display }}</span>
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    {% if university.official_url %}
+                    <a href="{{ university.official_url }}" 
+                       target="_blank" 
+                       class="btn btn-outline-primary">
+                        <i class="bi bi-globe"></i> 公式サイト
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 年度別過去問一覧 -->
+    <h3 class="mb-4">
+        <i class="bi bi-calendar-range"></i> 年度別過去問一覧
+    </h3>
+
+    {% if exams_by_year %}
+    {% for year, year_exams in exams_by_year.items %}
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h4 class="mb-0">
+                <i class="bi bi-calendar3"></i> {{ year }}年度
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                {% for exam in year_exams %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card card-exam h-100">
+                        <div class="card-body">
+                            <span class="badge badge-subject bg-info mb-2">
+                                {{ exam.get_subject_display }}
+                            </span>
+                            <h6 class="card-title">{{ exam.exam_type }}</h6>
+                            {% if exam.answer_sources.count > 0 %}
+                            <p class="small mb-3">
+                                <i class="bi bi-file-earmark-check text-success"></i>
+                                解答ソース: {{ exam.answer_sources.count }} 件
+                            </p>
+                            {% endif %}
+                            <a href="{% url 'exams:exam_detail' exam.pk %}" 
+                               class="btn btn-sm btn-primary w-100">
+                                詳細を見る
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle"></i>
+        この大学の過去問はまだ登録されていません。
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
