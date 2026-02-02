@@ -121,3 +121,32 @@ class ExamCreateForm(forms.ModelForm):
                 'placeholder': 'https://...',
             }),
         }
+
+    def clean(self):
+        """
+        フォーム全体のバリデーション
+        同じ大学・年度・科目・試験種別の組み合わせが既に存在する場合はエラー
+        """
+        cleaned_data = super().clean()
+        university = cleaned_data.get('university')
+        year = cleaned_data.get('year')
+        subject = cleaned_data.get('subject')
+        exam_type = cleaned_data.get('exam_type')
+
+        # 必須フィールドがすべて入力されている場合のみチェック
+        if university and year and subject and exam_type:
+            # 既存のレコードをチェック（編集時は自分自身を除外）
+            existing = Exam.objects.filter(
+                university=university,
+                year=year,
+                subject=subject,
+                exam_type=exam_type
+            )
+
+            # 新規作成時（pk がない場合）のみチェック
+            if self.instance.pk is None and existing.exists():
+                raise forms.ValidationError(
+                    f'この過去問は既に登録されています。（{university.name} {year}年度 {dict(Exam.SUBJECT_CHOICES).get(subject)} {exam_type}）'
+                )
+
+        return cleaned_data

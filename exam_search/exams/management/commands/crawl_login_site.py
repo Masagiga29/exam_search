@@ -292,19 +292,30 @@ class ToshinLoginCrawler:
                 page.screenshot(path='activate.png')
                 self.log("スクリーンショット保存: activate.png")
 
+                # ステップ5: 大学リンクを取得して、各大学ページから過去問データを抽出
+                self.log("\n大学リンクを抽出中...")
+                university_links = self._extract_university_links(all_links)
 
-                page.screenshot(path='kakomon_db.png')
-                self.log(f"過去問データベースのスクリーンショット保存: kakomon_db.png")
+                # 主要大学のみを対象にする（旧帝大 + 早慶上理 + MARCH + 関関同立）
+                target_universities = [
+                    '東京大学', '京都大学', '大阪大学', '東北大学', '名古屋大学', '九州大学', '北海道大学',
+                    '早稲田大学', '慶應義塾大学', '上智大学', '東京理科大学',
+                    '明治大学', '青山学院大学', '立教大学', '中央大学', '法政大学',
+                    '関西大学', '関西学院大学', '同志社大学', '立命館大学'
+                ]
+
+                # 対象大学のリンクのみをフィルタリング
+                filtered_links = [link for link in university_links if link['name'] in target_universities]
+                self.log(f"対象大学数: {len(filtered_links)}校")
 
                 try:
-                    # データを抽出
-                    # 実際のHTML構造に合わせてセレクタを調整
-                    exams_data = self._extract_exam_data(page)
+                    # 各大学のページから過去問データを抽出
+                    exams_data = self._crawl_universities(page, filtered_links)
 
                 except Exception as e:
                     self.log(f"過去問ページへのアクセスエラー: {e}")
-                    # フォールバック: ログイン後のページから過去問リンクを探す
-                    exams_data = self._find_and_extract_exams(page)
+                    # エラー時は空のリストを返す
+                    exams_data = []
 
             except Exception as e:
                 self.log(f"クローリングエラー: {e}")
@@ -487,6 +498,277 @@ class ToshinLoginCrawler:
             return 'social'
         else:
             return 'other'
+
+    def _extract_university_links(self, all_links):
+        """
+        ページから大学リンクを抽出
+
+        Args:
+            all_links: ページ上のすべてのリンク要素
+
+        Returns:
+            list: 大学名とURLの辞書リスト
+        """
+        university_links = []
+        base_url = "https://www.toshin-kakomon.com"
+
+        for link in all_links:
+            href = link.get_attribute('href') or ''
+            text = link.text_content().strip()
+
+            # /new_kakomon_db/university/ を含むリンクのみを抽出
+            if '/new_kakomon_db/university/' in href and text:
+                full_url = base_url + href if href.startswith('/') else href
+                university_links.append({
+                    'name': text,
+                    'url': full_url,
+                    'href': href
+                })
+                self.log(f"  抽出: {text} -> {href}")
+
+        self.log(f"\n合計 {len(university_links)} 校の大学リンクを抽出")
+        return university_links
+
+    def _crawl_universities(self, page, university_links):
+        """
+        各大学のページをクロールして過去問データを抽出
+
+        Args:
+            page: Playwrightのページオブジェクト
+            university_links: 大学名とURLの辞書リスト
+
+        Returns:
+            list: 過去問データの辞書リスト
+        """
+        all_exams_data = []
+
+        for i, univ in enumerate(university_links, 1):
+            try:
+                self.log(f"\n[{i}/{len(university_links)}] {univ['name']} の過去問を取得中...")
+                self.log(f"  URL: {univ['url']}")
+
+                # 大学ページに遷移
+                page.goto(univ['url'], wait_until='domcontentloaded', timeout=30000)
+                time.sleep(2)
+
+                # スクリーンショットを保存（デバッグ用）
+                if not self.headless and i == 1:
+                    screenshot_path = f"university_{univ['name']}.png"
+                    page.screenshot(path=screenshot_path)
+                    self.log(f"  スクリーンショット保存: {screenshot_path}")
+
+                # このページから過去問データを抽出
+                exams_data = self._extract_exam_data_from_university_page(page, univ['name'])
+
+                if exams_data:
+                    self.log(f"  ✓ {len(exams_data)}件の過去問を取得")
+                    all_exams_data.extend(exams_data)
+                else:
+                    self.log(f"  - 過去問データが見つかりませんでした")
+
+                # サーバーに負荷をかけないように待機
+                time.sleep(1)
+
+            except Exception as e:
+                self.log(f"  ✗ エラー: {e}")
+                continue
+
+        self.log(f"\n\n合計 {len(all_exams_data)} 件の過去問データを取得しました")
+        return all_exams_data
+
+    def _extract_exam_data_from_university_page(self, page, university_name):
+        """
+        大学ページから過去問データを抽出
+
+        東進過去問データベースのページ構造:
+        - 年度: 「2025年度 入試問題」などのh2/h3テキスト
+        - 科目: ページ上部のタブ（英語、数学、国語など）
+        - 問題: テーブル内のPDFアイコンリンク
+        - 解答: 青い「解答」テキストリンク
+
+        Args:
+            page: Playwrightのページオブジェクト
+            university_name: 大学名
+
+        Returns:
+            list: 過去問データの辞書リスト
+        """
+        exams_data = []
+        import re
+
+        try:
+            # 年度情報を取得（「2025年度 入試問題」など）
+            year_headings = page.query_selector_all('h2:has-text("年度"), h3:has-text("年度"), div:has-text("年度")')
+            years = set()
+
+            for heading in year_headings[:5]:  # 最新5年分まで
+                text = heading.text_content().strip()
+                year_match = re.search(r'(\d{4})', text)
+                if year_match:
+                    years.add(int(year_match.group(1)))
+
+            # 年度が見つからない場合は、ページテキスト全体から探す
+            if not years:
+                page_text = page.inner_text('body')
+                year_matches = re.findall(r'(\d{4})年度', page_text)
+                years = set([int(y) for y in year_matches if 2000 <= int(y) <= 2030])
+
+            # デフォルト年度
+            if not years:
+                years = {2025}
+
+            self.log(f"  検出した年度: {sorted(years, reverse=True)}")
+
+            # テーブル内のすべてのリンクを探す
+            # 東進サイトでは、PDFへの直接リンクではなく中間ページ（/question/、/answer/）へのリンク
+            all_table_links = page.query_selector_all('table a, .table a, tbody a, tr a, td a')
+            self.log(f"  テーブル内の全リンク: {len(all_table_links)}件")
+
+            # 問題リンクを探す（テキストが「問題」を含む、またはhrefに「/question/」を含む）
+            question_links = page.query_selector_all('a[href*="/question/"], a:has-text("問題")')
+            self.log(f"  検出した問題リンク: {len(question_links)}件")
+
+            # 科目コードマッピング（URLの科目コードから日本語名へ）
+            subject_code_map = {
+                'e': 'english',    # 英語
+                'm': 'math',       # 数学
+                'k': 'japanese',   # 国語
+                'j': 'history',    # 日本史
+                'w': 'history',    # 世界史
+                'o': 'geography',  # 地理
+                'p': 'physics',    # 物理
+                'c': 'chemistry',  # 化学
+                'b': 'biology',    # 生物
+                't': 'geography',  # 地学
+                's': 'social'      # 社会
+            }
+
+            # 各問題リンクを処理
+            for i, link in enumerate(question_links[:100]):  # 最大100件
+                try:
+                    href = link.get_attribute('href') or ''
+
+                    # デバッグ: 最初の5リンクを詳細ログ
+                    if i < 3:
+                        self.log(f"  処理中[{i+1}]: href={href}")
+
+                    # 相対URLを絶対URLに変換
+                    if href.startswith('/'):
+                        full_url = f"https://www.toshin-kakomon.com{href}"
+                    elif href.startswith('http'):
+                        full_url = href
+                    else:
+                        if i < 3:
+                            self.log(f"    スキップ: 無効なURL形式")
+                        continue
+
+                    # リンクテキストを取得
+                    link_text = link.text_content().strip() if link.text_content() else ''
+
+                    # 親要素のテキストを取得（シンプルな方法で）
+                    parent_text = ''
+                    try:
+                        # 親要素のテキストを取得
+                        parent_text = page.evaluate('(el) => el.closest("tr") ? el.closest("tr").textContent : ""', link)
+                    except Exception as e:
+                        if i < 3:
+                            self.log(f"    警告: 親要素取得エラー: {e}")
+                        parent_text = ''
+
+                    # URLから年度と科目コードを抽出
+                    # URL形式: /university/0l/2025/e0l251/question/
+                    # - 2025: 年度
+                    # - e0l251の最初の文字 'e': 科目コード
+                    year = max(years) if years else 2025  # デフォルトは最新年度
+                    subject = 'other'  # デフォルト科目
+
+                    # URLパターンマッチ: /university/{univ_id}/{year}/{subject_code}{rest}/question/
+                    url_match = re.search(r'/university/\w+/(\d{4})/(\w)(\w+)/(question|answer)/', href)
+                    if url_match:
+                        potential_year = int(url_match.group(1))
+                        if 2000 <= potential_year <= 2030:
+                            year = potential_year
+
+                        # 科目コード（URLの3番目のパスセグメントの最初の文字）
+                        subject_code = url_match.group(2).lower()
+                        if subject_code in subject_code_map:
+                            subject = subject_code_map[subject_code]
+
+                        # デバッグ用
+                        # self.log(f"    URL解析: {href[:60]} -> 年度={year}, 科目コード={subject_code}, 科目={subject}")
+
+                    # 学部・試験種別を推定
+                    exam_type = '一般入試'
+                    department = ''
+                    if '前期' in parent_text:
+                        exam_type = '前期'
+                    elif '後期' in parent_text:
+                        exam_type = '後期'
+                    if '文科' in parent_text:
+                        dept_match = re.search(r'文科[一二三]類', parent_text)
+                        if dept_match:
+                            department = dept_match.group(0)
+                    elif '理科' in parent_text:
+                        dept_match = re.search(r'理科[一二三]類', parent_text)
+                        if dept_match:
+                            department = dept_match.group(0)
+
+                    # 科目名の逆引き（表示用）
+                    subject_display_map = {
+                        'english': '英語',
+                        'math': '数学',
+                        'japanese': '国語',
+                        'physics': '物理',
+                        'chemistry': '化学',
+                        'biology': '生物',
+                        'history': '歴史',
+                        'geography': '地理',
+                        'science': '理科',
+                        'social': '社会',
+                        'other': 'その他'
+                    }
+
+                    # 過去問データを追加
+                    exams_data.append({
+                        'year': year,
+                        'subject': subject,
+                        'exam_type': exam_type,
+                        'department': department,
+                        'problem_url': full_url,
+                        'description': f'{university_name} {year}年度 {subject_display_map.get(subject, subject)} {department} {exam_type}',
+                        'source_type': 'yobi_school',
+                        'university_name': university_name
+                    })
+
+                except Exception as e:
+                    if i < 5:  # 最初の5件のエラーのみログ出力
+                        self.log(f"  問題リンク処理エラー[{i+1}]: {e}")
+                        import traceback
+                        self.log(f"    詳細: {traceback.format_exc()[:200]}")
+                    continue
+
+            # 解答リンクも探す（青い「解答」リンク）
+            answer_links = page.query_selector_all('a:has-text("解答")')
+            self.log(f"  検出した解答リンク: {len(answer_links)}件")
+
+            # 重複削除（同じ year + subject + exam_type の組み合わせ）
+            seen = set()
+            unique_exams = []
+            for exam in exams_data:
+                key = (exam['year'], exam['subject'], exam['exam_type'], exam['department'])
+                if key not in seen:
+                    seen.add(key)
+                    unique_exams.append(exam)
+
+            exams_data = unique_exams
+            self.log(f"  抽出した過去問データ: {len(exams_data)}件")
+
+        except Exception as e:
+            self.log(f"  データ抽出エラー: {e}")
+            import traceback
+            self.log(f"  詳細: {traceback.format_exc()}")
+
+        return exams_data
 
 
 class Command(BaseCommand):
