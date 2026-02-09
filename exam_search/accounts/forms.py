@@ -4,9 +4,7 @@ from django.contrib.auth.models import User
 
 
 class CustomUserCreationForm(UserCreationForm):
-    """
-    カスタムユーザー登録フォーム
-    """
+    
     email = forms.EmailField(
         required=True,
         label='メールアドレス',

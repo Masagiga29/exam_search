@@ -140,7 +140,6 @@
                                 <tr>
                                     <th scope="col">予備校・機関</th>
                                     <th scope="col">解説</th>
-                                    <th scope="col">動画</th>
                                     <th scope="col">信頼度</th>
                                     <th scope="col">リンク</th>
                                 </tr>
@@ -155,15 +154,6 @@
                                         {% if source.has_detailed_explanation %}
                                         <span class="badge bg-success">
                                             <i class="bi bi-check-circle"></i> あり
-                                        </span>
-                                        {% else %}
-                                        <span class="badge bg-secondary">なし</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if source.has_video_explanation %}
-                                        <span class="badge bg-danger">
-                                            <i class="bi bi-camera-video"></i> あり
                                         </span>
                                         {% else %}
                                         <span class="badge bg-secondary">なし</span>
@@ -193,7 +183,7 @@
                                 </tr>
                                 {% if source.notes %}
                                 <tr>
-                                    <td colspan="5" class="small text-muted">
+                                    <td colspan="4" class="small text-muted">
                                         <i class="bi bi-info-circle"></i> {{ source.notes }}
                                     </td>
                                 </tr>

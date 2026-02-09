@@ -26,7 +26,7 @@ from datetime import datetime
 
 
 class ExamCrawler:
-    """過去問データをクローリングするクラス"""
+    
 
     def __init__(self, verbose=False):
         self.verbose = verbose
@@ -41,23 +41,14 @@ class ExamCrawler:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] {message}")
 
     def fetch_page(self, url, max_retries=3):
-        """
-        URLからHTMLを取得する
-
-        Args:
-            url: 取得するURL
-            max_retries: リトライ回数
-
-        Returns:
-            BeautifulSoupオブジェクト
-        """
+        
+        
         for attempt in range(max_retries):
             try:
                 self.log(f"Fetching: {url}")
                 response = self.session.get(url, timeout=10)
                 response.raise_for_status()
 
-                # 文字化け対策
                 response.encoding = response.apparent_encoding
 
                 return BeautifulSoup(response.text, 'html.parser')
@@ -66,25 +57,15 @@ class ExamCrawler:
                 self.log(f"Error fetching {url} (attempt {attempt + 1}/{max_retries}): {e}")
                 if attempt == max_retries - 1:
                     raise
-                time.sleep(2 ** attempt)  # 指数バックオフ
+                time.sleep(2 ** attempt)  
 
         return None
 
     def crawl_sample_university_list(self):
-        """
-        サンプル: 大学一覧をクローリングする
-
-        実際のサイトに合わせてセレクタを調整してください
-
-        Returns:
-            list: 大学情報の辞書リスト
-        """
+        
         universities = []
 
-        # ===== サンプル実装 =====
-        # 実際のWebサイトに合わせて以下を修正してください
-
-        # 例1: 静的なサンプルデータ
+       
         sample_universities = [
             {
                 'name': '東京大学',

@@ -4,9 +4,7 @@ from .models import University, Exam, AnswerSource, SearchHistory, Favorite
 
 @admin.register(University)
 class UniversityAdmin(admin.ModelAdmin):
-    """
-    大学管理画面
-    """
+   
     list_display = ('name', 'name_kana', 'school_type', 'exam_count', 'created_at')
     list_filter = ('school_type', 'created_at')
     search_fields = ('name', 'name_kana')
@@ -18,20 +16,17 @@ class UniversityAdmin(admin.ModelAdmin):
 
 
 class AnswerSourceInline(admin.TabularInline):
-    """
-    Examの詳細画面でAnswerSourceを編集できるようにするインライン
-    """
+    
     model = AnswerSource
     extra = 1
-    fields = ('provider_name', 'answer_url', 'has_detailed_explanation', 
-              'has_video_explanation', 'reliability_score', 'is_active')
+    fields = ('provider_name', 'answer_url', 'has_detailed_explanation',
+              'reliability_score', 'is_active')
 
 
 @admin.register(Exam)
 class ExamAdmin(admin.ModelAdmin):
-    """
-    過去問管理画面
-    """
+    
+    
     list_display = ('university', 'year', 'subject', 'exam_type', 
                     'source_type', 'is_verified', 'answer_sources_count', 'created_at')
     list_filter = ('year', 'subject', 'exam_type', 'source_type', 'is_verified')
@@ -61,13 +56,10 @@ class ExamAdmin(admin.ModelAdmin):
 
 @admin.register(AnswerSource)
 class AnswerSourceAdmin(admin.ModelAdmin):
-    """
-    解答ソース管理画面
-    """
-    list_display = ('provider_name', 'exam', 'has_detailed_explanation', 
-                    'has_video_explanation', 'reliability_score', 'is_active', 'last_checked_at')
-    list_filter = ('provider_name', 'has_detailed_explanation', 
-                   'has_video_explanation', 'is_active')
+    
+    list_display = ('provider_name', 'exam', 'has_detailed_explanation',
+                    'reliability_score', 'is_active', 'last_checked_at')
+    list_filter = ('provider_name', 'has_detailed_explanation', 'is_active')
     search_fields = ('provider_name', 'exam__university__name', 'notes')
     ordering = ('-reliability_score', 'provider_name')
     
@@ -76,8 +68,7 @@ class AnswerSourceAdmin(admin.ModelAdmin):
             'fields': ('exam', 'provider_name', 'answer_url')
         }),
         ('解答の特徴', {
-            'fields': ('has_detailed_explanation', 'has_video_explanation', 
-                      'reliability_score', 'notes')
+            'fields': ('has_detailed_explanation', 'reliability_score', 'notes')
         }),
         ('ステータス', {
             'fields': ('is_active', 'last_checked_at')
@@ -87,9 +78,7 @@ class AnswerSourceAdmin(admin.ModelAdmin):
 
 @admin.register(SearchHistory)
 class SearchHistoryAdmin(admin.ModelAdmin):
-    """
-    検索履歴管理画面
-    """
+    
     list_display = ('user', 'query', 'searched_at')
     list_filter = ('searched_at',)
     search_fields = ('user__username', 'query')
@@ -101,9 +90,7 @@ class SearchHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
-    """
-    お気に入り管理画面
-    """
+    
     list_display = ('user', 'exam', 'created_at')
     list_filter = ('created_at',)
     search_fields = ('user__username', 'exam__university__name')

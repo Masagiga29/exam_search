@@ -31,13 +31,43 @@ class University(models.Model):
         blank=True,
         verbose_name="公式サイトURL"
     )
+
+    # 公式HP過去問掲載情報
+    has_official_pastpaper = models.BooleanField(
+        default=False,
+        verbose_name="公式HP過去問掲載",
+        help_text="公式HPに過去問が掲載されているか"
+    )
+    pastpaper_url = models.URLField(
+        blank=True,
+        verbose_name="過去問ページURL",
+        help_text="公式サイトの過去問ページURL"
+    )
+    pastpaper_years = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="掲載年度",
+        help_text="例: 2025, 2024, 2023"
+    )
+    pastpaper_checked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="確認日時",
+        help_text="過去問掲載状況を最後に確認した日時"
+    )
+    pastpaper_note = models.TextField(
+        blank=True,
+        verbose_name="備考",
+        help_text="過去問掲載に関する備考"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="登録日時")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新日時")
 
     class Meta:
         verbose_name = "学校"
         verbose_name_plural = "学校一覧"
-        ordering = ['name']
+        ordering = ['name_kana', 'name']
 
     def __str__(self):
         return self.name
@@ -135,7 +165,6 @@ class Exam(models.Model):
         verbose_name = "過去問"
         verbose_name_plural = "過去問一覧"
         ordering = ['-year', 'university__name', 'subject']
-        unique_together = ['university', 'year', 'subject', 'exam_type']
 
     def __str__(self):
         return f"{self.university.name} {self.year}年度 {self.get_subject_display()}"
@@ -168,10 +197,6 @@ class AnswerSource(models.Model):
         default=False,
         verbose_name="詳細解説あり",
         help_text="詳しい解説が含まれているか"
-    )
-    has_video_explanation = models.BooleanField(
-        default=False,
-        verbose_name="動画解説あり"
     )
     reliability_score = models.IntegerField(
         default=5,

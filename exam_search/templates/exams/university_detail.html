@@ -41,6 +41,50 @@
         </div>
     </div>
 
+    <!-- 公式HP過去問掲載情報 -->
+    {% if university.pastpaper_checked_at %}
+    <div class="alert {% if university.has_official_pastpaper %}alert-success{% else %}alert-warning{% endif %} mb-4" role="alert">
+        <h5 class="alert-heading">
+            <i class="bi bi-info-circle"></i> 公式HP過去問掲載情報
+        </h5>
+        {% if university.has_official_pastpaper %}
+            <p class="mb-2">
+                <i class="bi bi-check-circle text-success"></i>
+                <strong>公式HPに過去問ページが見つかりました</strong>
+            </p>
+            {% if university.pastpaper_url %}
+            <p class="mb-2">
+                <i class="bi bi-link-45deg"></i>
+                <a href="{{ university.pastpaper_url }}" target="_blank" class="alert-link">
+                    過去問ページへ <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+            </p>
+            {% endif %}
+            {% if university.pastpaper_years %}
+            <p class="mb-0">
+                <i class="bi bi-calendar-check"></i>
+                掲載年度: {{ university.pastpaper_years }}
+            </p>
+            {% endif %}
+        {% else %}
+            <p class="mb-0">
+                <i class="bi bi-exclamation-triangle"></i>
+                公式HPのトップページから過去問ページへのリンクが見つかりませんでした
+            </p>
+            {% if university.pastpaper_note %}
+            <p class="mb-0 small text-muted">
+                {{ university.pastpaper_note }}
+            </p>
+            {% endif %}
+        {% endif %}
+        <hr>
+        <p class="mb-0 small text-muted">
+            <i class="bi bi-clock"></i>
+            最終確認: {{ university.pastpaper_checked_at|date:"Y年m月d日" }}
+        </p>
+    </div>
+    {% endif %}
+
     <!-- 年度別過去問一覧 -->
     <h3 class="mb-4">
         <i class="bi bi-calendar-range"></i> 年度別過去問一覧

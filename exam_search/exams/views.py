@@ -86,8 +86,8 @@ class ExamSearchView(ListView):
         context['query'] = self.request.GET.get('q', '')
         context['total_results'] = self.get_queryset().count()
         
-        # 絞り込み用の選択肢
-        context['universities'] = University.objects.all()
+        # 絞り込み用の選択肢（あいうえお順）
+        context['universities'] = University.objects.order_by('name_kana', 'name')
         context['years'] = Exam.objects.values_list('year', flat=True).distinct().order_by('-year')
         context['subjects'] = Exam.SUBJECT_CHOICES
         
